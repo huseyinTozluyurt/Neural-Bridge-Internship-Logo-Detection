@@ -1,0 +1,128 @@
+# Brand-level aliases for combining OpenLogo and FlickrLogos32.
+# *_text, *_fig, and numbered duplicate labels are merged into the base brand when clear.
+# Review these choices if you need logo subtype classes instead of brand classes.
+classes: auto
+aliases:
+  adidas:
+  - adidas1
+  - adidas_text
+  aldi:
+  - aldi_text
+  allianz:
+  - allianz_text
+  aluratek:
+  - aluratek_text
+  amcrest:
+  - amcrest_text
+  americanexpress:
+  - americanexpress_text
+  anz:
+  - anz_text
+  aquapac:
+  - aquapac_text
+  audi:
+  - audi_text
+  bankofamerica:
+  - bankofamerica_text
+  bellodigital:
+  - bellodigital_text
+  boeing:
+  - boeing_text
+  bosch:
+  - bosch_text
+  bridgestone:
+  - bridgestone_text
+  budweiser:
+  - budweiser_text
+  burgerking:
+  - burgerking_text
+  chanel:
+  - chanel_text
+  chevrolet:
+  - chevrolet_text
+  citroen:
+  - citroen_text
+  cocacola:
+  - coke
+  corona:
+  - corona_text
+  cvs:
+  - cvspharmacy
+  esso:
+  - esso_text
+  guinness:
+  - guiness
+  head:
+  - head_text
+  heineken:
+  - heineken_text
+  homedepot:
+  - homedepot_text
+  honda:
+  - honda_text
+  hsbc:
+  - hsbc_text
+  huawei:
+  - huawei_text
+  hyundai:
+  - hyundai_text
+  infiniti:
+  - infiniti_text
+  lacoste:
+  - lacoste_text
+  lexus:
+  - lexus_text
+  marlboro:
+  - marlboro_fig
+  - marlboro_text
+  mcdonalds:
+  - mcdonalds_text
+  mercedesbenz:
+  - mercedesbenz_text
+  nike:
+  - nike_text
+  nissan:
+  - nissan_text
+  optus:
+  - optus_yes
+  pepsi:
+  - pepsi_text
+  - pepsi_text1
+  pizzahut:
+  - pizzahut_hut
+  porsche:
+  - porsche_text
+  puma:
+  - puma_text
+  redbull:
+  - redbull_text
+  reebok:
+  - reebok1
+  - reebok_text
+  rolex:
+  - rolex_text
+  santander:
+  - santander_text
+  scion:
+  - scion_text
+  shell:
+  - shell_text
+  - shell_text1
+  spar:
+  - spar_text
+  target:
+  - target_text
+  toyota:
+  - toyota_text
+  uniqlo:
+  - uniqlo1
+  verizon:
+  - verizon_text
+  volkswagen:
+  - volkswagen_text
+  walmart:
+  - walmart_text
+  wellsfargo:
+  - wellsfargo_text
+  yonex:
+  - yonex_text

@@ -1,0 +1,51 @@
+__pycache__/
+*.pyc
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+archive/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables / secrets
+.env
+
+# Datasets (too large for git; see scripts/README.md for how to regenerate)
+datasets/
+
+# Model weights and checkpoints (too large for git)
+*.pt
+*.pth
+*.onnx
+*.torchscript
+rf_detr_logo_checkpoints/
+
+# Training/inference outputs
+runs/
+reports/
+results/
+logs/
+*.log
+wandb/
+
+# TensorBoard
+events.out.tfevents.*
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

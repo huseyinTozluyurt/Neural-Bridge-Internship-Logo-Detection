@@ -1,0 +1,18 @@
+# Starter alias file for scripts/unify_logo_datasets.py.
+# With classes: auto, the output class list is the union of source classes.
+# Add an alias only when the labels truly identify the same brand/class.
+classes: auto
+
+aliases:
+  Coca-Cola:
+    - coca cola
+    - coca-cola
+    - coke
+  Guinness:
+    - guiness
+  Adidas:
+    - adidas logo
+  Apple:
+    - apple inc.
+  Starbucks:
+    - starbucks coffee
