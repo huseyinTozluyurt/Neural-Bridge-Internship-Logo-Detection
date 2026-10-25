@@ -376,7 +376,7 @@ python scripts/video_detection_gui.py
 ```
 
 <p align="center">
-<img src="docs/images/gui_screenshot.png" width="800" alt="PyQt5 Logo Detection Viewer — playing back an annotated detection video with a Heineken logo boxed">
+<img src="docs/images/PyQT_GUI.png" width="800" alt="PyQt5 Logo Detection Viewer — playing back an annotated detection video with a Heineken logo boxed">
 <br><sub>Batch detection in progress, with a completed video's annotated output playing back inline (Heineken logo boxed at bottom right)</sub>
 </p>
 
