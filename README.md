@@ -1,4 +1,16 @@
-# Neural-Bridge-Internship-Logo-Detection — AI Logo Flipping
+<p align="center">
+  <img src="assets/logo_detection_header.png" width="520" alt="AI Logo Flipping — detection and video banner">
+</p>
+
+<h1 align="center">Neural-Bridge-Internship-Logo-Detection</h1>
+<h3 align="center">AI Logo Flipping — Detection, Tracking &amp; Reflection Correction Pipeline</h3>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.12-blue" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/model-YOLOv7-orange" alt="YOLOv7">
+  <img src="https://img.shields.io/badge/framework-PyTorch-ee4c2c" alt="PyTorch">
+  <img src="https://img.shields.io/badge/GUI-PyQt5-41cd52" alt="PyQt5">
+</p>
 
 A complete Computer Vision pipeline for **detecting, tracking, segmenting, correcting, and reconstructing reflected or mirrored brand logos** in images and video. It combines a custom-trained YOLOv7 object detector, optional OCR, image segmentation (GrabCut / MobileSAM), perspective-aware geometric flipping, background inpainting, and multi-object video tracking into one pipeline — plus a desktop GUI for running it without the command line.
 
@@ -6,22 +18,28 @@ A complete Computer Vision pipeline for **detecting, tracking, segmenting, corre
 
 ## Table of contents
 
-- [System pipeline](#system-pipeline)
-- [Repository structure](#repository-structure)
-- [Setup](#setup)
-- [Dataset](#dataset)
-- [1. Training the model](#1-training-the-model)
-- [2. Evaluating the model](#2-evaluating-the-model)
-- [3. Running detection on images and videos](#3-running-detection-on-images-and-videos)
-- [4. Desktop GUI](#4-desktop-gui)
-- [5. The logo flipping pipeline](#5-the-logo-flipping-pipeline)
-- [6. Video tracking and flipping](#6-video-tracking-and-flipping)
+1. [System pipeline](#system-pipeline)
+2. [Repository structure](#repository-structure)
+3. [Setup](#setup)
+4. [Dataset](#dataset)
+5. [Training the model](#1-training-the-model)
+6. [Evaluating the model](#2-evaluating-the-model)
+7. [Understanding the evaluation metrics](#understanding-the-evaluation-metrics)
+8. [Live detection examples](#live-detection-examples)
+9. [Running detection on images and videos](#3-running-detection-on-images-and-videos)
+10. [Desktop GUI](#4-desktop-gui)
+11. [The logo flipping pipeline](#5-the-logo-flipping-pipeline)
+12. [Video tracking and flipping](#6-video-tracking-and-flipping)
 
 ---
 
 ## System pipeline
 
-### Single-image flipping pipeline
+<table>
+<tr>
+<td width="50%" valign="top">
+
+**Single-image flipping pipeline**
 
 ```mermaid
 flowchart TD
@@ -31,8 +49,8 @@ flowchart TD
     C --> D
     D --> E["Segmentation\nMobileSAM → GrabCut → bbox fallback"]
     E --> F["Geometry estimation\nPCA symmetry line + 4-point polygon"]
-    F --> G{"Perspective distortion?\n(opposite edge lengths differ >15%)"}
-    G -- yes --> H["Unwarp → flip → rewarp\n(homography-corrected reflection)"]
+    F --> G{"Perspective distortion?\nedge lengths differ >15%"}
+    G -- yes --> H["Unwarp → flip → rewarp\n(homography-corrected)"]
     G -- no --> I["Direct line reflection\n(2D reflection matrix)"]
     H --> J["Background inpainting\nLaMa or OpenCV Telea"]
     I --> J
@@ -40,32 +58,39 @@ flowchart TD
     K --> L[Output image]
 ```
 
-### Video tracking & flipping pipeline
+</td>
+<td width="50%" valign="top">
+
+**Video tracking &amp; flipping pipeline**
 
 ```mermaid
 flowchart TD
-    A[Video frame] --> B["YOLOv7 + optional OCR detection"]
-    B --> C["Track association\nHungarian algorithm: CLIP similarity + motion cost"]
-    C --> D["Kalman filter / optical flow\nposition prediction for lost tracks"]
-    D --> E["Segmentation\nMobileSAM + GrabCut refinement"]
-    E --> F["Hand/occlusion detection\nMediaPipe hand landmarks"]
+    A[Video frame] --> B["YOLOv7 + optional OCR"]
+    B --> C["Track association\nHungarian: CLIP + motion cost"]
+    C --> D["Kalman filter / optical flow\nposition prediction"]
+    D --> E["MobileSAM + GrabCut\nsegmentation"]
+    E --> F["Hand/occlusion detection\nMediaPipe"]
     F -- occluded --> G["Paste cached flipped logo\n+ cached inpainted background"]
     F -- clear view --> H["Flip + inpaint this frame\ncache the result"]
     G --> I[Composite output frame]
     H --> I
-    I --> J["ann.mp4 (viz) / fli.mp4 (clean) / inp.mp4 (inpainted)"]
+    I --> J["ann.mp4 / fli.mp4 / inp.mp4"]
 ```
 
-### Training pipeline (YOLOv7)
+</td>
+</tr>
+</table>
+
+**Training pipeline (YOLOv7)**
 
 ```mermaid
 flowchart LR
-    A[Source datasets\nFlickrLogos-32, OpenLogo, ...] --> B["unify_logo_datasets.py\nclass-name alias mapping"]
-    B --> C["Leakage-aware train/val/test split\nprepare_dataset_splits.py"]
+    A["Source datasets\nFlickrLogos-32, OpenLogo, ..."] --> B["unify_logo_datasets.py\nclass-name alias mapping"]
+    B --> C["Leakage-aware split\nprepare_dataset_splits.py"]
     C --> D["dataset_validation.py\npreflight checks"]
     D --> E["train_yolo.py → yolov7/train.py\nELAN backbone, anchor-based heads"]
     E --> F["evaluate_yolo.py → yolov7/test.py\nmAP / precision / recall / confusion matrix"]
-    F --> G["best.pt checkpoint\n(ready for detect_yolo.py / GUI / flipping pipeline)"]
+    F --> G["best.pt checkpoint\nready for detect_yolo.py / GUI / flipping pipeline"]
 ```
 
 ---
@@ -74,45 +99,45 @@ flowchart LR
 
 ```
 .
-├── config.py                    # Shared project configuration
-├── quick_start.sh               # One-shot environment sanity check
-├── test_setup.py                # Verifies CUDA / dependency availability
-├── assets/                      # Static images used in docs
-├── docs/                        # README images: GUI screenshot, evaluation charts
+├── config.py                    Shared project configuration
+├── quick_start.sh               One-shot environment sanity check
+├── test_setup.py                Verifies CUDA / dependency availability
+├── assets/                      Static images used in this README
+├── docs/                        README images: GUI screenshot, evaluation charts, sample detections
 │
-├── yolov7/                      # Vendored YOLOv7 (WongKinYiu), patched for this project
-│   ├── train.py, test.py, detect.py   # Core training / evaluation / inference scripts
-│   ├── models/                        # yolo.py (architecture), common.py, experimental.py
-│   ├── utils/                         # datasets.py, general.py, loss.py, metrics.py, ...
-│   ├── cfg/training/yolov7.yaml       # Model architecture definition
-│   └── data/hyp.scratch.p5*.yaml      # Hyperparameter presets (incl. a NaN-safe variant)
+├── yolov7/                      Vendored YOLOv7 (WongKinYiu), patched for this project
+│   ├── train.py, test.py, detect.py     Core training / evaluation / inference scripts
+│   ├── models/                          yolo.py (architecture), common.py, experimental.py
+│   ├── utils/                           datasets.py, general.py, loss.py, metrics.py, ...
+│   ├── cfg/training/yolov7.yaml         Model architecture definition
+│   └── data/hyp.scratch.p5*.yaml        Hyperparameter presets (incl. a NaN-safe variant)
 │
-├── scripts/                     # This project's own tooling — the actual pipeline code
-│   ├── train_yolo.py                  # Training wrapper: validates data, calls yolov7/train.py
-│   ├── evaluate_yolo.py               # Evaluation wrapper: calls yolov7/test.py, builds reports
-│   ├── detect_yolo.py                 # Inference wrapper: calls yolov7/detect.py
-│   ├── dataset_validation.py          # Preflight dataset integrity checks
-│   ├── unify_logo_datasets.py         # Merges multiple logo datasets into one taxonomy
-│   ├── prepare_dataset_splits.py      # Leakage-aware train/val/test splitting
-│   ├── convert_*.py                   # VOC / COCO / FlickrLogos32 → YOLO format converters
-│   ├── audit_dataset.py               # Class balance + duplicate-image auditing
+├── scripts/                     This project's own tooling — the actual pipeline code
+│   ├── train_yolo.py                    Training wrapper: validates data, calls yolov7/train.py
+│   ├── evaluate_yolo.py                 Evaluation wrapper: calls yolov7/test.py, builds reports
+│   ├── detect_yolo.py                   Inference wrapper: calls yolov7/detect.py
+│   ├── dataset_validation.py            Preflight dataset integrity checks
+│   ├── unify_logo_datasets.py           Merges multiple logo datasets into one taxonomy
+│   ├── prepare_dataset_splits.py        Leakage-aware train/val/test splitting
+│   ├── convert_*.py                     VOC / COCO / FlickrLogos32 → YOLO format converters
+│   ├── audit_dataset.py                 Class balance + duplicate-image auditing
 │   │
-│   ├── logo_flipping_pipeline.py      # Single-image pipeline: detect→segment→flip→inpaint→blend
-│   ├── video_logo_tracking.py         # Video pipeline: adds tracking, Kalman filter, occlusion handling
-│   ├── sam_masker.py                  # MobileSAM wrapper used by both pipelines above
-│   ├── clip_embedder.py               # CLIP embeddings for brand re-identification / tracking
-│   ├── detect_unknown_logos.py        # Open-set brand matching (YOLO + CLIP gallery)
+│   ├── logo_flipping_pipeline.py        Single-image: detect → segment → flip → inpaint → blend
+│   ├── video_logo_tracking.py           Video: adds tracking, Kalman filter, occlusion handling
+│   ├── sam_masker.py                    MobileSAM wrapper used by both pipelines above
+│   ├── clip_embedder.py                 CLIP embeddings for brand re-ID / tracking
+│   ├── detect_unknown_logos.py          Open-set brand matching (YOLO + CLIP gallery)
 │   │
-│   ├── video_detection_gui.py         # PyQt5 desktop GUI (see below)
-│   └── README.md                      # Full CLI reference for every script above
+│   ├── video_detection_gui.py           PyQt5 desktop GUI (see below)
+│   └── README.md                        Full CLI reference for every script above
 │
-├── datasets/                    # NOT included — see "Dataset" section below
-├── runs/                        # NOT included — created locally by training/detection
-├── reports/                     # NOT included — created locally by evaluate_yolo.py
-├── test_images/, test_videos/   # NOT included — create these yourself, see below
+├── datasets/                    Not included — see Dataset section below
+├── runs/                        Not included — created locally by training/detection
+├── reports/                     Not included — created locally by evaluate_yolo.py
+├── test_images/, test_videos/   Not included — create these yourself, see below
 ```
 
-**How the pieces relate:** `scripts/` is the project-specific layer; `yolov7/` is the underlying detector framework it drives. Training and evaluation never call `yolov7/train.py` / `yolov7/test.py` directly — they go through `scripts/train_yolo.py` / `scripts/evaluate_yolo.py`, which add dataset validation, path normalization, and reporting on top. The flipping pipeline (`logo_flipping_pipeline.py`) is the single-image core; `video_logo_tracking.py` builds on it frame-by-frame and adds everything temporal (tracking, Kalman prediction, occlusion caching). `video_detection_gui.py` is a thin PyQt front end over `detect_yolo.py` / `yolov7/detect.py` for batch image/video detection without the terminal.
+> **How the pieces relate:** `scripts/` is the project-specific layer; `yolov7/` is the underlying detector framework it drives. Training and evaluation never call `yolov7/train.py` / `yolov7/test.py` directly — they go through `scripts/train_yolo.py` / `scripts/evaluate_yolo.py`, which add dataset validation, path normalization, and reporting on top. The flipping pipeline (`logo_flipping_pipeline.py`) is the single-image core; `video_logo_tracking.py` builds on it frame-by-frame and adds everything temporal (tracking, Kalman prediction, occlusion caching). `video_detection_gui.py` is a thin PyQt front end over `detect_yolo.py` / `yolov7/detect.py` for batch image/video detection without the terminal.
 
 ---
 
@@ -171,10 +196,11 @@ python scripts/train_yolo.py \
     --name logos_multiclass_flickr32_v1
 ```
 
-Notes:
-- `--hyp yolov7/data/hyp.scratch.p5.no_ota.yaml` uses a variant of YOLOv7's default hyperparameters with `loss_ota` disabled. The default OTA (Optimal Transport Assignment) loss is numerically unstable at very small batch sizes (needed on low-VRAM GPUs) and can produce `NaN` losses; this variant trains cleanly.
-- Adjust `--batch-size` / `--img-size` to your GPU's VRAM. This project trained successfully on a 4GB GTX 1650 at `batch-size=4, img-size=416`.
-- `--expect-classes` and `--min-val-objects-per-class` are safety guards — training aborts rather than silently proceeding if the dataset doesn't match expectations.
+| Flag | Why it's there |
+|---|---|
+| `--hyp hyp.scratch.p5.no_ota.yaml` | Disables YOLOv7's OTA (Optimal Transport Assignment) loss. The default OTA loss is numerically unstable at very small batch sizes and can produce `NaN` losses; this variant trains cleanly on low-VRAM GPUs. |
+| `--batch-size 4 --img-size 416` | Tuned for a 4GB GPU (GTX 1650). Scale both up if you have more VRAM. |
+| `--expect-classes`, `--min-val-objects-per-class` | Safety guards — training aborts rather than silently proceeding if the dataset doesn't match expectations. |
 
 **Resuming an interrupted run** — always resume from `best.pt`, not `last.pt`. `best.pt` is only ever overwritten when validation fitness genuinely improves, so it can never be corrupted by a bad epoch, while `last.pt` is overwritten unconditionally every epoch:
 ```bash
@@ -187,10 +213,9 @@ python scripts/train_yolo.py \
     --resume runs/train/logos_multiclass_flickr32_v1/weights/best.pt
 ```
 
-### Training curves (this project's actual run, 100 epochs)
-
 <p align="center">
-<img src="docs/images/training_curves.png" width="720" alt="Training loss and mAP curves over 100 epochs">
+<img src="docs/images/training_curves.png" width="760" alt="Training loss and mAP curves over 100 epochs">
+<br><sub>Training loss and mAP curves over 100 epochs on this project's actual run</sub>
 </p>
 
 ---
@@ -205,38 +230,35 @@ python scripts/evaluate_yolo.py \
     --device 0
 ```
 
-**Important:** always pass `--img-size` matching your training resolution — it defaults to 640. On some GPUs, FP16 inference in `yolov7/test.py` can silently produce invalid results; if evaluation metrics come back as zero despite a model that trains and detects fine elsewhere, add `--no-half` to `scripts/evaluate_yolo.py`'s underlying `test.py` call (already wired through both scripts) to force FP32 inference.
+> **Two gotchas this project ran into, both already fixed in this repo's `yolov7/test.py` / `scripts/evaluate_yolo.py`:**
+> 1. Always pass `--img-size` matching your training resolution — it defaults to 640.
+> 2. On some GPUs, FP16 inference inside `yolov7/test.py` can silently produce invalid (`NaN`) results even though the model itself is fine. Both scripts already pass `--no-half` to force FP32 evaluation by default.
 
-This writes a full report to `reports/checkpoint_evaluation/<run>/`: `evaluation_report.json`, `confusion_matrix.png`, PR/F1 curves, per-class metrics CSV, false-positive and missed-detection CSVs with annotated examples.
+This writes a full report to `reports/checkpoint_evaluation/<run>/`: `evaluation_report.json`, `confusion_matrix.png`, PR/F1 curves, a per-class metrics CSV, and false-positive / missed-detection CSVs with annotated examples.
 
 ### Results on the held-out test split (32-class FlickrLogos-32 model, 224 test images)
 
 | Metric | Value |
 |---|---|
-| mAP@0.5 | **94.75%** |
-| mAP@0.5:0.95 | **82.04%** |
+| **mAP@0.5** | **94.75%** |
+| **mAP@0.5:0.95** | **82.04%** |
 | Precision | 85.71% |
 | Recall | 92.88% |
-| F1 | 89.15% |
-| True positives / False positives / Missed | 300 / 50 / 23 (of 323 ground-truth logos) |
+| F1-score | 89.15% |
+| TP / FP / Missed | 300 / 50 / 23 (of 323 ground-truth logos) |
 
 <p align="center">
-<img src="docs/images/eval_confusion_matrix.png" width="520" alt="Confusion matrix">
-<br><em>Confusion matrix</em>
+<img src="docs/images/eval_confusion_matrix.png" width="560" alt="Confusion matrix">
+<br><sub>Confusion matrix — rows/columns are predicted vs. true class, background included</sub>
 </p>
 
 <p align="center">
 <img src="docs/images/eval_pr_curve.png" width="420" alt="Precision-Recall curve">
-<img src="docs/images/eval_f1_curve.png" width="420" alt="F1 curve">
-</p>
-
-<p align="center">
-<img src="docs/images/eval_test_predictions.jpg" width="720" alt="Model predictions on held-out test images">
-<br><em>Predicted boxes on held-out test images</em>
+<img src="docs/images/eval_f1_curve.png" width="420" alt="F1 vs. confidence curve">
 </p>
 
 <details>
-<summary>Full per-class breakdown (click to expand)</summary>
+<summary><strong>Full per-class breakdown (click to expand)</strong></summary>
 
 | Class | GT | TP | FP | FN | Precision | Recall | AP@0.5 | AP@0.5:0.95 |
 |---|---|---|---|---|---|---|---|---|
@@ -278,6 +300,40 @@ Full machine-readable results: [`docs/eval_per_class_metrics.csv`](docs/eval_per
 
 ---
 
+## Understanding the evaluation metrics
+
+A quick reference for what each number in the evaluation report actually means:
+
+| Term | Meaning |
+|---|---|
+| **Confidence** | The model's own certainty (0–1) that a predicted box both contains an object *and* is the class it says it is. YOLO computes this as `objectness × class probability`. The `--conf` threshold in `detect_yolo.py` / `evaluate_yolo.py` throws away any prediction below that score before it counts as a "detection" — raise it for fewer false alarms, lower it to catch more (but noisier) detections. |
+| **Precision** | Of everything the model *predicted* as a given class, what fraction was actually correct? `TP / (TP + FP)`. Low precision means the model cries wolf — it flags things that aren't really there. |
+| **Recall** | Of everything that *actually was* that class in the image, what fraction did the model find? `TP / (TP + FN)`. Low recall means the model misses real logos. |
+| **F1-score** | The harmonic mean of precision and recall: `2 × (P × R) / (P + R)`. A single balanced number — useful because precision and recall usually trade off against each other as you move the confidence threshold, and F1 tells you where that trade-off is best. |
+| **AP@0.5 / AP@0.5:0.95** | Average Precision: the area under a class's precision-recall curve as the confidence threshold sweeps from 0 to 1. `AP@0.5` only counts a detection as correct if its box overlaps the true box by ≥50% IoU (Intersection-over-Union); `AP@0.5:0.95` is the stricter average across ten IoU thresholds (0.50 to 0.95), rewarding tightly-fit boxes, not just roughly-correct ones. `mAP` is simply AP averaged across all 32 classes. |
+| **Confusion matrix** | A grid of predicted class (rows) vs. true class (columns). The diagonal is correct predictions; everything off the diagonal is a mix-up. In this project's matrix, most confusion happens between visually similar logos — e.g. Carlsberg and Heineken both use a red shield/star mark on a green-and-gold label, so the model occasionally swaps them at a glance, the same way a person might from a distance. |
+
+---
+
+## Live detection examples
+
+Detections from `detect_yolo.py` running on real advertisement video frames (not the training/test split — genuinely unseen footage), using `runs/train/.../weights/best.pt` at `--conf 0.4`:
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/detection_pepsi.png" width="100%" alt="Pepsi can detected at 0.95 confidence"><br><sub><strong>Pepsi</strong> — 0.95 confidence</sub></td>
+<td width="50%"><img src="docs/images/detection_stellaartois.png" width="100%" alt="Stella Artois glass detected at 0.89 confidence"><br><sub><strong>Stella Artois</strong> — 0.89 confidence</sub></td>
+</tr>
+<tr>
+<td width="50%"><img src="docs/images/detection_paulaner_multi.png" width="100%" alt="Multiple Paulaner logos detected in one busy frame"><br><sub><strong>Paulaner</strong> — 4 logos in one busy frame (0.81 / 0.87)</sub></td>
+<td width="50%"><img src="docs/images/detection_cocacola.png" width="100%" alt="Coca-Cola logo detected on a truck at 0.70 confidence"><br><sub><strong>Coca-Cola</strong> — 0.70 confidence, small/angled logo</sub></td>
+</tr>
+</table>
+
+Also included for transparency, [`docs/eval_per_class_metrics.csv`](docs/eval_per_class_metrics.csv) and the per-class table above show exactly where the model is weaker (e.g. `carlsberg`, `tsingtao`) — generally the classes with fewer training examples or visual overlap with another brand.
+
+---
+
 ## 3. Running detection on images and videos
 
 `test_images/` and `test_videos/` are not committed to this repository. Create them yourself and drop in your own sample media:
@@ -306,13 +362,13 @@ python scripts/detect_yolo.py \
     --conf 0.4
 ```
 
-Annotated output is written to `runs/detect/<name>/`, with YOLO-format label files alongside if `--save-txt` behavior is left at its default (see `scripts/README.md` for the full flag reference).
+Annotated output is written to `runs/detect/<name>/`, with YOLO-format label files alongside (see `scripts/README.md` for the full flag reference).
 
 ---
 
 ## 4. Desktop GUI
 
-`scripts/video_detection_gui.py` is a PyQt5 desktop app that wraps the same detection pipeline for batch image/video processing without the terminal — pick a checkpoint, select files or whole folders (including drag-and-drop), tune confidence/IoU/image size, and watch per-item progress with inline logs.
+`scripts/video_detection_gui.py` is a PyQt5 desktop app that wraps the same detection pipeline for batch image/video processing without the terminal — pick a checkpoint, select files or whole folders (including drag-and-drop), tune confidence/IoU/image size, and watch per-item progress with inline logs. Once an item finishes, select it to play back the annotated result directly in the window.
 
 ```bash
 pip install -r scripts/requirements-gui.txt
@@ -320,10 +376,9 @@ python scripts/video_detection_gui.py
 ```
 
 <p align="center">
-<img src="docs/images/gui_screenshot.png" width="800" alt="PyQt5 Logo Detection Viewer — batch video detection in progress">
+<img src="docs/images/gui_screenshot.png" width="800" alt="PyQt5 Logo Detection Viewer — playing back an annotated detection video with a Heineken logo boxed">
+<br><sub>Batch detection in progress, with a completed video's annotated output playing back inline (Heineken logo boxed at bottom right)</sub>
 </p>
-
-The GUI lets you browse to a `.pt` checkpoint and a results folder, set detection parameters, queue multiple images/videos, and review completed detections (annotated image preview / video playback) in the same window once a batch finishes.
 
 ---
 
