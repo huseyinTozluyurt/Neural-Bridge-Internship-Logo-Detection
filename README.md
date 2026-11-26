@@ -12,6 +12,8 @@
   <img src="https://img.shields.io/badge/GUI-PyQt5-41cd52" alt="PyQt5">
 </p>
 
+<p align="center"><strong><a href="https://huseyintozluyurt.github.io/Neural-Bridge-Internship-Logo-Detection/">📘 Read the illustrated pipeline guide (GitHub Pages)</a></strong></p>
+
 A complete Computer Vision pipeline for **detecting, tracking, segmenting, correcting, and reconstructing reflected or mirrored brand logos** in images and video. It combines a custom-trained YOLOv7 object detector, optional OCR, image segmentation (GrabCut / MobileSAM), perspective-aware geometric flipping, background inpainting, and multi-object video tracking into one pipeline — plus a desktop GUI for running it without the command line.
 
 ---
