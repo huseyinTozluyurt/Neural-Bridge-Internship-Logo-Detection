@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import Section from './components/Section.jsx';
 import CodeBlock from './components/CodeBlock.jsx';
 import Figure, { imageSrc } from './components/Figure.jsx';
@@ -13,6 +13,9 @@ import TrainingDynamics from './components/TrainingDynamics.jsx';
 import QualitativeGallery from './components/QualitativeGallery.jsx';
 import { ref, SAMPLES } from './components/qualitativeData.js';
 import Reveal from './components/Reveal.jsx';
+import ScrollProgress from './components/ScrollProgress.jsx';
+import CountUp from './components/CountUp.jsx';
+import useAutoReveal from './components/useAutoReveal.js';
 
 const REPO_URL = 'https://github.com/huseyinTozluyurt/Neural-Bridge-Internship-Logo-Detection';
 
@@ -65,9 +68,11 @@ const KPIS = [
 export default function App() {
   const active = useScrollSpy(NAV.map((n) => n.id));
   const [menuOpen, setMenuOpen] = useState(false);
+  useAutoReveal();
 
   return (
     <>
+      <ScrollProgress />
       <header className="topbar">
         <a className="brand" href="#top">
           <span className="brand-mark" aria-hidden="true" />
@@ -135,7 +140,11 @@ function Hero() {
     <section className="hero">
       <div className="hero-text">
         <div className="kicker">Computer vision · YOLOv7 · PyTorch · PyQt5</div>
-        <h1>Brand logo detection, from raw datasets to a desktop app</h1>
+        <h1 className="hero-title">
+          {'Brand logo detection, from raw datasets to a desktop app'.split(' ').map((w, i) => (
+            <Fragment key={i}><span style={{ animationDelay: `${120 + i * 70}ms` }}>{w}</span>{' '}</Fragment>
+          ))}
+        </h1>
         <p className="lead">
           A guided tour of the full pipeline in this repository: converting and unifying FlickrLogos-32 and OpenLogo, auditing labels
           for correctness, configuring and training a YOLOv7 detector, scoring it with precision, recall and mAP, and running it on
@@ -169,7 +178,7 @@ function Hero() {
       <div className="kpis" aria-label="Published test-split results">
         {KPIS.map((k) => (
           <div key={k.label} className="kpi">
-            <div className="kpi-value">{k.value}</div>
+            <div className="kpi-value"><CountUp value={k.value} /></div>
             <div className="kpi-label">{k.label}</div>
           </div>
         ))}
@@ -753,7 +762,7 @@ python scripts/evaluate_yolo.py \\
       <div className="kpis inline">
         {KPIS.map((k) => (
           <div key={k.label} className="kpi">
-            <div className="kpi-value">{k.value}</div>
+            <div className="kpi-value"><CountUp value={k.value} /></div>
             <div className="kpi-label">{k.label}</div>
           </div>
         ))}
@@ -969,15 +978,15 @@ const FAILURE_MODES = [
     remedy: 'Add grayscale/desaturation augmentation and monochrome or printed-on-fabric training examples.',
   },
   {
-    mode: 'Low confidence on occlusion',
+    mode: 'Correct but low confidence',
     examples: `${ref('h')} pepsi 0.41 under a paw; ${ref('coke_toy')} cocacola 0.48 on a tiny, blurred toy truck; ${ref('f')} pepsi 0.52 on a re-captured screen`,
-    cause: 'Partially visible logos give weaker evidence, so scores fall towards the threshold.',
-    remedy: 'Pick the threshold from the F1 curve for the use case; use tracking to carry identities through occluded frames.',
+    cause: 'The brand is right, but occluded or tiny logos give weaker evidence, so scores fall towards the threshold.',
+    remedy: 'Not an error at 0.40, but a high threshold hides these. In video, tracking carries the identity through such frames.',
   },
   {
-    mode: 'Missed truncated logos',
-    examples: `${ref('g')} cans at the frame edge; ${ref('paul_glass')} occluded bottle label; ${ref('coke_convoy')} cab-door logo and distant trailers; ${ref('m')} background trucks`,
-    cause: 'Objects cut by the frame border or only a few pixels tall are under-represented in training.',
+    mode: 'Missed tiny background logos',
+    examples: `${ref('m')} Esso logos on background trucks in the 5×5 video wall`,
+    cause: 'Logos only a few pixels tall are under-represented in training.',
     remedy: 'Train at a larger --img-size if VRAM allows; mosaic augmentation already creates some truncation.',
   },
 ];
@@ -996,9 +1005,41 @@ function Qualitative() {
           {SAMPLES.length} frames were captured from the PyQt5 viewer while it ran <code>detect_yolo.py</code> with the 32-class FlickrLogos-32 checkpoint at
           confidence 0.4 and NMS IoU 0.45. The footage is commercial advertising video that played no part in training, validation or
           testing. These frames have no ground-truth annotations, so each verdict is a visual judgement against the brand on screen, and the
-          set was chosen to show failure modes, not to estimate accuracy. Click any image to enlarge it; use ← and → to step through.
+          set was chosen to show both strengths and failure modes, not to estimate accuracy. Move the threshold slider to see which boxes
+          survive each setting. Click any image to enlarge it; use ← and → to step through.
         </div>
       </Reveal>
+      <h3>Choosing a stable confidence threshold</h3>
+      <p>
+        Every box in these frames carries a confidence score, and <code>--conf</code> decides which ones are shown. The F1 curve from the
+        test split (Fig. Q0) is the principled place to pick it. It peaks at <b>F1 = 0.93 at confidence 0.774</b>, and it forms a broad
+        plateau: anywhere from about 0.45 to 0.85, F1 stays within a few points of that peak. A value on the plateau is{' '}
+        <i>stable</i>: small shifts in lighting or scale move scores a little, but they do not tip the operating point off a cliff.
+      </p>
+      <div className="two-col">
+        <Figure name="eval_f1_curve.png" alt="F1 versus confidence threshold, peaking at 0.93 at 0.774" caption="Fig. Q0. F1 against confidence on the 224-image test split. Grey: individual classes. Blue: all classes, best F1 0.93 at 0.774." />
+        <div>
+          <table className="plain">
+            <thead><tr><th>Threshold</th><th>Correct kept</th><th>Wrong kept</th><th>Use it for</th></tr></thead>
+            <tbody>
+              <tr><td><code>0.40</code></td><td>39 / 39</td><td>5 / 5</td><td>Maximum recall. Every logo in Fig. Q1 is shown, including occluded and tiny ones.</td></tr>
+              <tr><td><code>0.50</code></td><td>37 / 39</td><td>5 / 5</td><td>Video tracking default; tracking recovers the few frames it drops.</td></tr>
+              <tr className="recommended"><td><code>0.77</code> ★</td><td>29 / 39</td><td>1 / 5</td><td>Recommended for an image demo. Measured optimum on 323 labelled logos; removes 4 of the 5 misclassifications.</td></tr>
+              <tr><td><code>0.80</code></td><td>27 / 39</td><td>0 / 5</td><td>Zero misclassifications on these frames, at the cost of hiding small and occluded logos.</td></tr>
+            </tbody>
+          </table>
+          <p className="muted">
+            Counts are over the 44 boxes in Fig. Q1 (39 correct, 5 wrong). These frames were picked by hand, so treat them as an
+            illustration; the 0.774 optimum comes from the labelled test split.
+          </p>
+        </div>
+      </div>
+      <Callout title="Recommendation">
+        Run the image demo at <code>--conf 0.77</code>, the test-split optimum. For video, use <code>0.50</code>: a logo that drops
+        below threshold for one frame usually reappears in the next, so recall matters more than per-frame precision. Try both with
+        the slider below.
+      </Callout>
+
       <h3>Fig. Q1 · Detections across scenes, scales and degradations</h3>
       <QualitativeGallery />
 
