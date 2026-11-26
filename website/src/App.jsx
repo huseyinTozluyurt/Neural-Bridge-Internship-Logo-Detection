@@ -11,6 +11,7 @@ import LabelChecker from './components/LabelChecker.jsx';
 import MetricsTable from './components/MetricsTable.jsx';
 import TrainingDynamics from './components/TrainingDynamics.jsx';
 import QualitativeGallery from './components/QualitativeGallery.jsx';
+import { ref, SAMPLES } from './components/qualitativeData.js';
 import Reveal from './components/Reveal.jsx';
 
 const REPO_URL = 'https://github.com/huseyinTozluyurt/Neural-Bridge-Internship-Logo-Detection';
@@ -957,25 +958,25 @@ function Recipe() {
 const FAILURE_MODES = [
   {
     mode: 'Inter-class confusion',
-    examples: '(n) Heineken → carlsberg 0.66; (m) Esso badge → stellaartois 0.79, paulaner 0.76',
+    examples: `${ref('n')} Heineken → carlsberg 0.66; ${ref('m')} Esso badge → stellaartois 0.79, paulaner 0.76`,
     cause: 'Brands that share colour scheme and emblem shape; at small scale the lettering that separates them is lost.',
     remedy: 'More examples of the confusable pairs (OpenLogo adds both); review the confusion matrix per pair after retraining.',
   },
   {
     mode: 'Loss of colour cue',
-    examples: '(o) grayscale Esso → bmw 0.50; (p) white-on-black Esso print → ups 0.75',
+    examples: `${ref('o')} grayscale Esso → bmw 0.50; ${ref('p')} white-on-black Esso print → ups 0.75`,
     cause: 'The detector leans on brand colours; monochrome renderings leave only shape, which other brands share.',
     remedy: 'Add grayscale/desaturation augmentation and monochrome or printed-on-fabric training examples.',
   },
   {
     mode: 'Low confidence on occlusion',
-    examples: '(h) pepsi 0.41 under a paw; (f) pepsi 0.52 on a re-captured screen',
+    examples: `${ref('h')} pepsi 0.41 under a paw; ${ref('coke_toy')} cocacola 0.48 on a tiny, blurred toy truck; ${ref('f')} pepsi 0.52 on a re-captured screen`,
     cause: 'Partially visible logos give weaker evidence, so scores fall towards the threshold.',
     remedy: 'Pick the threshold from the F1 curve for the use case; use tracking to carry identities through occluded frames.',
   },
   {
     mode: 'Missed truncated logos',
-    examples: '(g) cans at the frame edge; (m) small logos on background trucks',
+    examples: `${ref('g')} cans at the frame edge; ${ref('paul_glass')} occluded bottle label; ${ref('coke_convoy')} cab-door logo and distant trailers; ${ref('m')} background trucks`,
     cause: 'Objects cut by the frame border or only a few pixels tall are under-represented in training.',
     remedy: 'Train at a larger --img-size if VRAM allows; mosaic augmentation already creates some truncation.',
   },
@@ -992,7 +993,7 @@ function Qualitative() {
       <Reveal className="callout">
         <strong>Protocol</strong>
         <div>
-          Frames were captured from the PyQt5 viewer while it ran <code>detect_yolo.py</code> with the 32-class FlickrLogos-32 checkpoint at
+          {SAMPLES.length} frames were captured from the PyQt5 viewer while it ran <code>detect_yolo.py</code> with the 32-class FlickrLogos-32 checkpoint at
           confidence 0.4 and NMS IoU 0.45. The footage is commercial advertising video that played no part in training, validation or
           testing. These frames have no ground-truth annotations, so each verdict is a visual judgement against the brand on screen, and the
           set was chosen to show failure modes, not to estimate accuracy. Click any image to enlarge it; use ← and → to step through.
@@ -1022,7 +1023,7 @@ function Qualitative() {
         <Reveal className="card finding">
           <span className="finding-n">1</span>
           <h4>Robust to scene conditions</h4>
-          <p>Colour casts, film grain, snow cover, curved surfaces and busy backgrounds do not break detection; confidences stay at 0.92–0.97.</p>
+          <p>Colour casts, film grain, snow cover, curved glass, overlapping objects, AI-generated imagery and busy backgrounds do not break detection; frontal logos stay at 0.87–0.97.</p>
         </Reveal>
         <Reveal className="card finding" delay={100}>
           <span className="finding-n">2</span>
