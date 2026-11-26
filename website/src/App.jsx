@@ -9,6 +9,9 @@ import IoUPlayground from './components/IoUPlayground.jsx';
 import PRCalculator from './components/PRCalculator.jsx';
 import LabelChecker from './components/LabelChecker.jsx';
 import MetricsTable from './components/MetricsTable.jsx';
+import TrainingDynamics from './components/TrainingDynamics.jsx';
+import QualitativeGallery from './components/QualitativeGallery.jsx';
+import Reveal from './components/Reveal.jsx';
 
 const REPO_URL = 'https://github.com/huseyinTozluyurt/Neural-Bridge-Internship-Logo-Detection';
 
@@ -24,9 +27,11 @@ const NAV = [
   { id: 'evaluation', label: 'Evaluation' },
   { id: 'metrics', label: 'Understanding metrics' },
   { id: 'inference', label: 'Image & video inference' },
+  { id: 'qualitative', label: 'Qualitative results' },
   { id: 'gui', label: 'PyQt5 application' },
   { id: 'beyond', label: 'Beyond detection' },
   { id: 'recipe', label: 'Retraining recipe' },
+  { id: 'cite', label: 'Cite' },
 ];
 
 function useScrollSpy(ids) {
@@ -102,9 +107,11 @@ export default function App() {
           <Evaluation />
           <Metrics />
           <Inference />
+          <Qualitative />
           <Gui />
           <Beyond />
           <Recipe />
+          <Cite />
           <footer className="footer">
             <p>
               Built with React and Vite from the code in{' '}
@@ -133,12 +140,31 @@ function Hero() {
           for correctness, configuring and training a YOLOv7 detector, scoring it with precision, recall and mAP, and running it on
           images and videos from a PyQt5 application.
         </p>
+        <details className="abstract">
+          <summary>Abstract</summary>
+          <p>
+            We describe an end-to-end pipeline for closed-set brand-logo detection. Heterogeneous public datasets (FlickrLogos-32 and
+            OpenLogo) are converted to a common YOLO format and merged into one taxonomy through an explicit alias map. Splits are built
+            from perceptual-hash duplicate groups to prevent train/test leakage, and every label is checked by a preflight validator before
+            training. A COCO-pretrained YOLOv7 detector fine-tuned on FlickrLogos-32 reaches 94.75% mAP@0.5 and 82.04% mAP@0.5:0.95
+            on a held-out test split. Qualitative analysis on unseen advertisement footage shows strong robustness to clutter, colour
+            casts and archival degradation. The dominant failure modes are confusion between brands with similar colour schemes and
+            loss of the colour cue in monochrome renderings, which motivates the combined-dataset model.
+          </p>
+        </details>
         <div className="hero-actions">
           <a className="btn" href="#overview">Start the tour</a>
-          <a className="btn ghost" href="#recipe">Jump to the retraining recipe</a>
+          <a className="btn ghost" href="#qualitative">See qualitative results</a>
         </div>
       </div>
-      <img className="hero-img" src={imageSrc('logo_detection_header.png')} alt="Logo detection banner" />
+      <div className="hero-visual">
+        <img className="hero-img" src={imageSrc('qual_paulaner_beergarden.jpg')} alt="Paulaner emblem detected at 0.97 confidence in a beer-garden advertisement" />
+        <svg className="hero-overlay" viewBox="0 0 100 57" preserveAspectRatio="none" aria-hidden="true">
+          <rect className="hero-box" x="39.6" y="9.9" width="20.3" height="20.4" pathLength="1" />
+        </svg>
+        <span className="hero-tag">paulaner 0.97</span>
+        <span className="hero-scan" aria-hidden="true" />
+      </div>
       <div className="kpis" aria-label="Published test-split results">
         {KPIS.map((k) => (
           <div key={k.label} className="kpi">
@@ -643,6 +669,34 @@ python scripts/train_yolo.py ...same flags... \\
         Resume from <code>best.pt</code>, not <code>last.pt</code>. <code>best.pt</code> is only overwritten when validation fitness
         improves, so a bad epoch can never corrupt it; <code>last.pt</code> is overwritten every epoch.
       </p>
+      <h3>Watching a run: the console log</h3>
+      <Figure
+        wide
+        name="training_log_epochs_3_12.png"
+        alt="YOLOv7 console log for epochs 3 to 12 showing losses, precision, recall and mAP per epoch"
+        caption="Fig. T1. YOLOv7 console output for epochs 3–12 of a 100-epoch run (416 px, batch 4, 2.04 GB GPU memory). Each epoch has two rows: training losses (box, obj, cls, total) over 446 iterations, then validation on 232 images with 373 boxes."
+      />
+      <TrainingDynamics />
+      <div className="two-col">
+        <Reveal className="card">
+          <h4>What the first epochs show</h4>
+          <ul className="tight">
+            <li>mAP@0.5 rises from 0.08 to 0.49 in nine epochs while the total loss falls steadily from 0.106 to 0.081. The detector is still far from converged at this point.</li>
+            <li>Precision swings (0.06 → 0.38 → 0.29 → 0.46) while recall climbs more steadily. Early on, confidence scores are poorly calibrated: the single operating point YOLOv7 reports moves around even when the underlying ranking (mAP) improves monotonically.</li>
+            <li>The gap between mAP@0.5 and mAP@0.5:0.95 stays near 0.14. Boxes are found before they are tight; the strict IoU levels catch up later in training.</li>
+          </ul>
+        </Reveal>
+        <Reveal className="card" delay={100}>
+          <h4>A systems observation</h4>
+          <p>
+            Epoch time grows from 7 min 25 s (epochs 4–8) to about 34.5 min (epochs 10–12), and validation slows from 22 s to 1 min 47 s.
+            Training and validation slow by the same 4–5×, which points to the machine rather than the model: most likely GPU thermal
+            or power throttling, or another process competing for the GPU. With <code>--workers 0</code> data loading also runs on the
+            main process, so CPU contention shows up directly.
+          </p>
+          <p className="muted">Worth checking with <code>nvidia-smi -q -d PERFORMANCE,TEMPERATURE</code> during the next run.</p>
+        </Reveal>
+      </div>
       <Figure
         wide
         name="training_curves.png"
@@ -786,7 +840,7 @@ function Gui() {
   return (
     <Section
       id="gui"
-      kicker="12 · PyQt5 application"
+      kicker="13 · PyQt5 application"
       title="Logo Detection Studio: the desktop app"
       lead="video_detection_gui.py puts the detection pipeline behind a PyQt5 window: choose media, choose a checkpoint, run a batch and play back the annotated results without touching the terminal."
     >
@@ -827,7 +881,7 @@ function Beyond() {
   return (
     <Section
       id="beyond"
-      kicker="13 · Beyond detection"
+      kicker="14 · Beyond detection"
       title="What else is built on the detector"
       lead="The trained checkpoint also feeds the repository's research tools. They are optional for detection but share the same weights."
     >
@@ -875,7 +929,7 @@ function Recipe() {
   return (
     <Section
       id="recipe"
-      kicker="14 · Retraining recipe"
+      kicker="15 · Retraining recipe"
       title="Training the combined FlickrLogos-32 + OpenLogo model"
       lead="The whole pipeline in order, for replacing the outdated checkpoint. Tick steps off as you go; the checklist lives only in this browser tab."
     >
@@ -896,6 +950,112 @@ function Recipe() {
         model should hold or improve those, and its overall mAP is only comparable to the old one on the same test images. Review the
         unification report&apos;s duplicate groups and classes with sparse validation support before trusting per-class numbers.
       </Callout>
+    </Section>
+  );
+}
+
+const FAILURE_MODES = [
+  {
+    mode: 'Inter-class confusion',
+    examples: '(n) Heineken → carlsberg 0.66; (m) Esso badge → stellaartois 0.79, paulaner 0.76',
+    cause: 'Brands that share colour scheme and emblem shape; at small scale the lettering that separates them is lost.',
+    remedy: 'More examples of the confusable pairs (OpenLogo adds both); review the confusion matrix per pair after retraining.',
+  },
+  {
+    mode: 'Loss of colour cue',
+    examples: '(o) grayscale Esso → bmw 0.50; (p) white-on-black Esso print → ups 0.75',
+    cause: 'The detector leans on brand colours; monochrome renderings leave only shape, which other brands share.',
+    remedy: 'Add grayscale/desaturation augmentation and monochrome or printed-on-fabric training examples.',
+  },
+  {
+    mode: 'Low confidence on occlusion',
+    examples: '(h) pepsi 0.41 under a paw; (f) pepsi 0.52 on a re-captured screen',
+    cause: 'Partially visible logos give weaker evidence, so scores fall towards the threshold.',
+    remedy: 'Pick the threshold from the F1 curve for the use case; use tracking to carry identities through occluded frames.',
+  },
+  {
+    mode: 'Missed truncated logos',
+    examples: '(g) cans at the frame edge; (m) small logos on background trucks',
+    cause: 'Objects cut by the frame border or only a few pixels tall are under-represented in training.',
+    remedy: 'Train at a larger --img-size if VRAM allows; mosaic augmentation already creates some truncation.',
+  },
+];
+
+function Qualitative() {
+  return (
+    <Section
+      id="qualitative"
+      kicker="12 · Qualitative results"
+      title="Qualitative results on unseen advertisement footage"
+      lead="The test-split numbers say how often the detector is right. These frames show where and why it is right or wrong, which is what guides the next round of data collection."
+    >
+      <Reveal className="callout">
+        <strong>Protocol</strong>
+        <div>
+          Frames were captured from the PyQt5 viewer while it ran <code>detect_yolo.py</code> with the 32-class FlickrLogos-32 checkpoint at
+          confidence 0.4 and NMS IoU 0.45. The footage is commercial advertising video that played no part in training, validation or
+          testing. These frames have no ground-truth annotations, so each verdict is a visual judgement against the brand on screen, and the
+          set was chosen to show failure modes, not to estimate accuracy. Click any image to enlarge it; use ← and → to step through.
+        </div>
+      </Reveal>
+      <h3>Fig. Q1 · Detections across scenes, scales and degradations</h3>
+      <QualitativeGallery />
+
+      <h3>Failure analysis</h3>
+      <p>
+        The failures fall into four recurring modes. None of them is random noise: each points to a specific gap in the training data or a
+        specific setting, which makes them actionable for the combined FlickrLogos-32 + OpenLogo model.
+      </p>
+      <div className="table-wrap plain-wrap">
+        <table className="plain">
+          <thead><tr><th>Failure mode</th><th>Observed in</th><th>Likely cause</th><th>Remedy</th></tr></thead>
+          <tbody>
+            {FAILURE_MODES.map((f) => (
+              <tr key={f.mode}>
+                <td><b>{f.mode}</b></td><td>{f.examples}</td><td>{f.cause}</td><td>{f.remedy}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="three-col">
+        <Reveal className="card finding">
+          <span className="finding-n">1</span>
+          <h4>Robust to scene conditions</h4>
+          <p>Colour casts, film grain, snow cover, curved surfaces and busy backgrounds do not break detection; confidences stay at 0.92–0.97.</p>
+        </Reveal>
+        <Reveal className="card finding" delay={100}>
+          <span className="finding-n">2</span>
+          <h4>Colour is a crutch</h4>
+          <p>Both high-confidence misclassifications of Esso happen when the logo appears without its colours. Grayscale augmentation is the cheapest experiment to run next.</p>
+        </Reveal>
+        <Reveal className="card finding" delay={200}>
+          <span className="finding-n">3</span>
+          <h4>Errors match the metrics</h4>
+          <p>The Heineken/Carlsberg confusion seen here is the same pair the confusion matrix and the per-class AP table flag. Offline metrics predict field behaviour.</p>
+        </Reveal>
+      </div>
+    </Section>
+  );
+}
+
+const BIBTEX = `@misc{tozluyurt2026logodetection,
+  author       = {Tozluyurt, H{\\"u}seyin},
+  title        = {Brand Logo Detection with {YOLOv7}: Dataset Unification,
+                  Label Auditing, Training and Evaluation},
+  year         = {2026},
+  howpublished = {\\url{https://github.com/huseyinTozluyurt/Neural-Bridge-Internship-Logo-Detection}},
+  note         = {Neural Bridge internship project}
+}`;
+
+function Cite() {
+  return (
+    <Section id="cite" kicker="16 · Cite" title="Citing this work" lead="If this pipeline or its analysis helps your research, please cite the repository.">
+      <CodeBlock lang="bibtex" title="BibTeX" code={BIBTEX} />
+      <p className="muted">
+        Please also cite YOLOv7 (Wang, Bochkovskiy and Liao, CVPR 2023), FlickrLogos-32 (Romberg et al., ICMR 2011) and OpenLogo (Su, Gong
+        and Zhu, 2018) when you use those components.
+      </p>
     </Section>
   );
 }
